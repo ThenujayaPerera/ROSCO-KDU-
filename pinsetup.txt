@@ -1,0 +1,222 @@
+	
+
+
+
+Board output----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+21:00:54.307 -> GPIO6   : HIGH->1  LOW->0   OK (toggles normally)
+21:00:54.389 -> GPIO7   : HIGH->1  LOW->0   OK (toggles normally)
+21:00:54.427 -> GPIO8   : HIGH->1  LOW->0   OK (toggles normally)
+21:00:54.511 -> GPIO9   : HIGH->1  LOW->0   OK (toggles normally)
+21:00:54.547 -> GPIO10  : HIGH->1  LOW->0   OK (toggles normally)
+21:00:54.634 -> GPIO11  : HIGH->1  LOW->0   OK (toggles normally)
+21:00:54.668 -> GPIO12  : HIGH->1  LOW->0   OK (toggles normally)
+21:00:54.741 -> GPIO13  : HIGH->1  LOW->0   OK (toggles normally)
+21:00:54.835 -> GPIO14  : HIGH->1  LOW->0   OK (toggles normally)
+21:00:54.879 -> GPIO15  : HIGH->1  LOW->0   OK (toggles normally)
+21:00:54.925 -> GPIO16  : HIGH->1  LOW->0   OK (toggles normally)
+21:00:54.967 -> GPIO17  : HIGH->1  LOW->0   OK (toggles normally)
+21:00:55.047 -> GPIO18  : HIGH->1  LOW->0   OK (toggles normally)
+21:00:55.087 -> GPIO21  : HIGH->1  LOW->0   OK (toggles normally)
+21:00:55.169 -> GPIO35  : HIGH->1  LOW->0   OK (toggles normally)
+21:00:55.246 -> GPIO36  : HIGH->1  LOW->0   OK (toggles normally)
+21:00:55.292 -> GPIO37  : HIGH->1  LOW->0   OK (toggles normally)
+21:00:55.327 -> GPIO38  : HIGH->1  LOW->0   OK (toggles normally)
+21:00:55.415 -> GPIO39  : HIGH->1  LOW->0   OK (toggles normally)
+21:00:55.447 -> GPIO40  : HIGH->1  LOW->0   OK (toggles normally)
+21:00:55.536 -> GPIO41  : HIGH->1  LOW->0   OK (toggles normally)
+21:00:55.584 -> GPIO42  : HIGH->1  LOW->0   OK (toggles normally)
+21:00:55.627 -> GPIO45  : HIGH->1  LOW->0   OK (toggles normally)
+21:00:55.705 -> GPIO46  : HIGH->1  LOW->0   OK (toggles normally)
+21:00:55.781 -> GPIO47  : HIGH->1  LOW->0   OK (toggles normally)
+21:00:55.827 -> GPIO48  : HIGH->1  LOW->0   OK (toggles normally)
+21:00:55.864 -> 
+21:00:55.864 -> === Scan complete ===
+21:00:55.864 -> Pins intentionally NOT tested (reserved for known reasons, not toggle-tested):
+21:00:55.864 ->   GPIO0  - BOOT button / strapping pin, unsafe to force OUTPUT
+21:00:55.904 ->   GPIO19 - USB D-  (native USB data line, testing would disconnect this session)
+21:00:55.904 ->   GPIO20 - USB D+  (native USB data line, testing would disconnect this session)
+21:00:55.904 ->   GPIO43 - UART0 TX (this IS your current serial connection)
+21:00:55.904 ->   GPIO44 - UART0 RX (this IS your current serial connection)
+indexing: 48/59
+Ln 99, Col 1
+ESP32S3 Dev Module
+on COM7
+2
+================================================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+Final-----------------------
+#ifndef PINS_H
+#define PINS_H
+
+// --- 11 IR SENSORS (CH1-9 = ADC1, future analog-swap ready) ---
+const uint8_t IR_PINS[11] = {
+  1, 2, 4, 5, 6, 7, 8, 9, 10,   // IR_01..09, ADC1
+  11,  // IR_10, ADC2 — digital-only, avoid analog while WiFi active
+  12   // IR_11, ADC2 — digital-only, avoid analog while WiFi active
+};
+
+// --- I2C PERIPHERALS (BMI160) ---
+#define PIN_I2C_SDA      13
+#define PIN_I2C_SCL      14
+
+// --- TB6612FNG MOTOR DRIVER (STBY on its own pin — real kill-switch) ---
+#define PIN_MOTOR_STBY   -----I connect to 3.3 V so that pin 15 become an extra pin
+#define PIN_MOTOR_AIN1   16
+#define PIN_MOTOR_AIN2   17
+#define PIN_MOTOR_PWMA   18
+#define PIN_MOTOR_BIN1   38
+#define PIN_MOTOR_BIN2   39
+#define PIN_MOTOR_PWMB   40
+
+// --- QUADRATURE ENCODERS ---
+#define PIN_ENC1_A       41
+#define PIN_ENC1_B       42
+#define PIN_ENC2_A       47
+#define PIN_ENC2_B       21    
+
+// --- UART COMMUNICATION (BOARD B) ---
+// NOTE: uses TX0/RX0 — sacrifices USB serial monitor after boot
+#define PIN_UART_TX      43
+#define PIN_UART_RX      44
+
+// GPIO48 — reserved, confirmed onboard RGB LED, never assign
+
+#endif // PINS_H
+
+
+Here is the wiring breakdown for connecting your two GA25-370 motors to the TB6612FNG motor driver board shown in the image.
+To keep code logic consistent across both sides (so forward on Motor A moves forward on Motor B), assign Channel A to the Left Motor and Channel B to the Right Motor.
+Left Motor Wiring (Channel A)
+Motor Wire Color	Wire Function	Driver Pin	Microcontroller / Power
+Red	Motor Power (+)	AO1	—
+White	Motor Power (-)	AO2	—
+Blue	Encoder Power (+)	—	3.3V / 5V Logic VCC
+Black	Encoder Power (-)	—	GND
+Yellow	Encoder Signal A	—	GPIO 41 (PIN_ENC1_A)
+Green	Encoder Signal B	—	GPIO 42 (PIN_ENC1_B)
+	Driver Logic Control for Left Motor:
+	PWMA: Connect to a PWM-capable GPIO for Left Speed.
+	AIN1 / AIN2: Connect to GPIO pins for Left Direction control.
+Right Motor Wiring (Channel B)
+Note on motor direction: Because the right motor is mounted symmetrically opposite to the left motor, its polarity (Red/White) is swapped relative to the driver outputs. This ensures that sending the same direction signals (IN1 = HIGH, IN2 = LOW) to both channels drives the robot straight forward.
+Motor Wire Color	Wire Function	Driver Pin	Microcontroller / Power
+White	Motor Power (-)	BO1	—
+Red	Motor Power (+)	BO2	—
+Blue	Encoder Power (+)	—	3.3V / 5V Logic VCC
+Black	Encoder Power (-)	—	GND
+Yellow	Encoder Signal A	—	GPIO 47 (PIN_ENC2_A)
+Green	Encoder Signal B	—	GPIO 21 (PIN_ENC2_B)
+	Driver Logic Control for Right Motor:
+	PWMB: Connect to a PWM-capable GPIO for Right Speed.
+	BIN1 / BIN2: Connect to GPIO pins for Right Direction control.
+Driver Power & Control Pins Summary
+Driver Pin	Connection Target	Description
+VM	Motor Battery (+)	12V external power for motors
+VCC	Microcontroller 3.3V / 5V	Board logic power
+GND	Common GND	Connect to battery GND and MCU GND
+STBY	Microcontroller GPIO (or 3.3V/5V)	Set HIGH to enable the motor driver
+		
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+___-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------_______________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________-
+___-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------_______________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________-
+
+
+Here is the complete pinout chart compiled from your images, with the SDA and SCL pin assignments swapped for the ToF Laser (VL53L0X):
+
+
+Pin Assignment Chart (ToF I2C Pins Swapped)
+Subsystem	Component Pin	Assigned ESP32 Pin	GPIO Number
+UART Inter-Board Link	RX	D25	GPIO 25
+	TX	D26	GPIO 26
+Color Sensor (TCS230)	MOSFET Gate	D4	GPIO 4
+	S2	D18	GPIO 18
+	S3	D19	GPIO 19
+	OUT	D35	GPIO 35
+	S0 / S1	Hardwired	—
+ToF Laser (VL53L0X)	SDA	D22	GPIO 22
+	SCL	D21	GPIO 21
+Arm Servos (2x)	MG995 (Arm Joint 1)arm main servo	D14	GPIO 14
+added another servo is GPIO 2 (D2).  For rotate tof sensor and identify objects in wide area	MG990 (Arm Joint 2)   leqaneer actuator	D27	GPIO 27
+TB6612FNG Gripper Driver
+
+
+(Replaces Gripper Servo)
+	PWMA	D13	GPIO 13
+	AIN1	D5	GPIO 5
+	AIN2	D15	GPIO 15
+	STBY	Hardwired	—
+2x Ultrasonic Sensors	Ultrasonic 1 TRIG	D16	GPIO 16
+	Ultrasonic 1 ECHO	VP	GPIO 36
+	Ultrasonic 2 TRIG	D17	GPIO 17
+	Ultrasonic 2 ECHO	VN	GPIO 39
+A4988 Stepper Driver	STEP	D32	GPIO 32
+	DIR	D33	GPIO 33
+	ENABLE	D23	GPIO 23
+IR Proximity Sensor( for future not still connected )	OUT	D34	GPIO 34
+Note on Swap:
+
+
+	SDA is now assigned to D22 (GPIO 22) (previously D21 / GPIO 21).
+
+	SCL is now assigned to D21 (GPIO 21) (previously D22 / GPIO 22).
+
+
+🔌 Wiring Map
+Board B Pin	Board A Pin	Connection Type	Function
+TX (GPIO 26)	RX (GPIO 44)	Board B TX → Board A RX	
+RX (GPIO 25)	TX (GPIO 43)	Board A TX → Board B RX	
+GND	GND	Common Ground	Reference voltage (Mandatory)
+
